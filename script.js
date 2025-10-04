@@ -1,0 +1,341 @@
+// ---------- Initialize Map ----------
+const map = L.map('map').setView([22.5,79],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:18 }).addTo(map);
+
+// ---------- Problem Datasets ----------
+const issues = {
+  air:[{name:"New Delhi (Delhi)",lat:28.61,lon:77.23,info:"High PM2.5 (MODIS AOD)"},{name:"Mumbai (Maharashtra)",lat:19.07,lon:72.88,info:"High AOD coastal"},{name:"Kanpur (U.P.)",lat:26.45,lon:80.33,info:"Industrial PM2.5"},{name:"Ahmedabad (Gujarat)",lat:23.03,lon:72.58,info:"High AOD urban"},{name:"Jaipur (Rajasthan)",lat:26.91,lon:75.79,info:"Dust + vehicle pollution"},{name:"Patna (Bihar)",lat:25.61,lon:85.14,info:"Frequent high PM2.5"},{name:"Kolkata (W.B.)",lat:22.57,lon:88.36,info:"Industrial emissions"},{name:"Ludhiana (Punjab)",lat:30.91,lon:75.85,info:"Crop-burning AOD"},{name:"Gurugram (Haryana)",lat:28.46,lon:77.03,info:"Urban smog belt"},{name:"Hyderabad (Telangana)",lat:17.38,lon:78.49,info:"Urban air pollution"}],
+  water:[{name:"Varanasi",lat:25.32,lon:83.01,info:"Ganga turbidity"},{name:"Kochi",lat:9.93,lon:76.26,info:"Backwater pollution"},{name:"Cuttack",lat:20.46,lon:85.88,info:"Mahanadi contamination"},{name:"Guwahati",lat:26.14,lon:91.73,info:"River sediments"},{name:"Visakhapatnam",lat:17.68,lon:83.22,info:"Coastal industrial"},{name:"Mangalore",lat:12.91,lon:74.85,info:"Marine pollutants"},{name:"Haridwar",lat:29.96,lon:78.16,info:"Religious waste"},{name:"Srinagar",lat:34.08,lon:74.80,info:"Dal Lake algal blooms"},{name:"Panaji",lat:15.49,lon:73.82,info:"Mandovi pollution"},{name:"Dimapur",lat:25.91,lon:93.73,info:"River pollution hotspot"}],
+  heat:[{name:"Nagpur",lat:21.15,lon:79.08,info:"High LST (MODIS)"},{name:"Rajkot",lat:22.30,lon:70.80,info:"Summer temp anomaly"},{name:"Jaisalmer",lat:26.92,lon:70.91,info:"Desert heat"},{name:"Gwalior",lat:26.23,lon:78.18,info:"Central heat zone"},{name:"Warangal",lat:17.97,lon:79.60,info:"Dry interior heat"},{name:"Bilaspur",lat:22.09,lon:82.15,info:"High LST trend"},{name:"Dhanbad",lat:23.80,lon:86.43,info:"Mining heat island"},{name:"Una",lat:31.47,lon:76.27,info:"Foothill heat anomaly"},{name:"Leh",lat:34.15,lon:77.58,info:"High diurnal temp variation"},{name:"Port Blair",lat:11.67,lon:92.75,info:"Tropical heat stress"}],
+  flood:[{name:"Alappuzha",lat:9.50,lon:76.33,info:"Monsoon flood"},{name:"Puri",lat:19.81,lon:85.83,info:"Cyclone risk"},{name:"Dibrugarh",lat:27.48,lon:94.91,info:"Floodplain"},{name:"Rajahmundry",lat:17.00,lon:81.79,info:"Godavari flood basin"},{name:"Dehradun",lat:30.32,lon:78.03,info:"Flash flood valley"},{name:"Chandigarh",lat:30.73,lon:76.77,info:"Urban flood risk"},{name:"Tura",lat:25.51,lon:90.20,info:"Heavy rain zone"},{name:"Itanagar",lat:27.10,lon:93.61,info:"Hill floods"},{name:"Rajkot",lat:22.30,lon:70.80,info:"Urban floods"},{name:"Daman",lat:20.40,lon:72.87,info:"Coastal flood risk"}],
+  forest:[{name:"Vellore",lat:12.91,lon:79.13,info:"Low tree cover"},{name:"Raipur",lat:21.25,lon:81.63,info:"Deforestation trend"},{name:"Bhubaneswar",lat:20.27,lon:85.84,info:"Low green fraction"},{name:"Satna",lat:24.58,lon:80.83,info:"Sparse forest"},{name:"Bathinda",lat:30.21,lon:74.94,info:"Sparse vegetation"},{name:"Hisar",lat:29.15,lon:75.72,info:"Arid zone"},{name:"Ballari",lat:15.14,lon:76.92,info:"Dry scrubland"},{name:"Solan",lat:30.91,lon:77.09,info:"Forest degradation"},{name:"Kathua",lat:32.37,lon:75.52,info:"Low forest fraction"},{name:"Margao",lat:15.29,lon:73.95,info:"Urban expansion impact"}]
+};
+const colors={air:"crimson",water:"dodgerblue",heat:"orange",flood:"royalblue",forest:"forestgreen"};
+let markers=[];
+let cityDetailMarkers = [];
+
+// Detailed city problems data
+const cityProblems = {
+  Delhi: [
+    // Landfill sites
+    {type: "landfill", lat: 28.675, lon: 77.238, info: "Bhalswa Landfill"},
+    {type: "landfill", lat: 28.612, lon: 77.323, info: "Ghazipur Landfill"},
+    {type: "landfill", lat: 28.508, lon: 77.271, info: "Okhla Landfill"},
+    {type: "landfill", lat: 28.698, lon: 77.198, info: "Bawana Waste Plant"},
+    {type: "landfill", lat: 28.633, lon: 77.287, info: "Shahdara Dump"},
+    {type: "landfill", lat: 28.582, lon: 77.185, info: "Tughlakabad Waste Site"},
+    {type: "landfill", lat: 28.647, lon: 77.142, info: "Rohini Waste Collection"},
+    
+    // Sewage issues
+    {type: "sewage", lat: 28.608, lon: 77.257, info: "Yamuna Sewage Outlet"},
+    {type: "sewage", lat: 28.653, lon: 77.248, info: "Wazirabad Drain"},
+    {type: "sewage", lat: 28.567, lon: 77.252, info: "Barapullah Drain"},
+    {type: "sewage", lat: 28.622, lon: 77.283, info: "Shahdara Drain"},
+    {type: "sewage", lat: 28.587, lon: 77.232, info: "Maharani Bagh Outlet"},
+    {type: "sewage", lat: 28.642, lon: 77.212, info: "Civil Lines Drain"},
+    {type: "sewage", lat: 28.598, lon: 77.192, info: "Lajpat Nagar Drain"},
+    
+    // Healthcare gaps
+    {type: "hospital", lat: 28.632, lon: 77.218, info: "Old Delhi Healthcare Gap"},
+    {type: "hospital", lat: 28.705, lon: 77.165, info: "Narela Medical Desert"},
+    {type: "hospital", lat: 28.548, lon: 77.298, info: "Okhla Healthcare Gap"},
+    {type: "hospital", lat: 28.683, lon: 77.223, info: "Burari Medical Shortage"},
+    {type: "hospital", lat: 28.592, lon: 77.162, info: "Dwarka Healthcare Gap"},
+    {type: "hospital", lat: 28.668, lon: 77.322, info: "Ghaziabad Border Gap"},
+    {type: "hospital", lat: 28.618, lon: 77.305, info: "East Delhi Medical Desert"},
+    
+    // High population density areas
+    {type: "population", lat: 28.652, lon: 77.232, info: "Old Delhi Dense Area"},
+    {type: "population", lat: 28.633, lon: 77.219, info: "Chandni Chowk Density"},
+    {type: "population", lat: 28.568, lon: 77.242, info: "Nizamuddin Density"},
+    {type: "population", lat: 28.638, lon: 77.243, info: "Daryaganj Crowding"},
+    {type: "population", lat: 28.607, lon: 77.208, info: "Karol Bagh Density"},
+    {type: "population", lat: 28.655, lon: 77.178, info: "Pitampura Crowding"},
+    {type: "population", lat: 28.583, lon: 77.278, info: "Mayur Vihar Density"}
+  ],
+  
+  Mumbai: [
+    // Landfill sites
+    {type: "landfill", lat: 19.158, lon: 72.912, info: "Deonar Dumping Ground"},
+    {type: "landfill", lat: 19.178, lon: 72.882, info: "Mulund Dumping Ground"},
+    {type: "landfill", lat: 19.042, lon: 72.865, info: "Kanjurmarg Landfill"},
+    {type: "landfill", lat: 19.092, lon: 72.908, info: "Govandi Waste Site"},
+    {type: "landfill", lat: 19.023, lon: 72.855, info: "Malad Waste Collection"},
+    {type: "landfill", lat: 19.198, lon: 72.978, info: "Thane Border Dump"},
+    {type: "landfill", lat: 19.062, lon: 72.835, info: "Andheri Waste Site"},
+    
+    // Sewage issues
+    {type: "sewage", lat: 19.042, lon: 72.822, info: "Worli Sea Outfall"},
+    {type: "sewage", lat: 19.012, lon: 72.813, info: "Colaba Sewage Point"},
+    {type: "sewage", lat: 19.058, lon: 72.835, info: "Bandra Outlet"},
+    {type: "sewage", lat: 19.082, lon: 72.878, info: "Kurla Drain"},
+    {type: "sewage", lat: 19.023, lon: 72.842, info: "Mahim Creek Pollution"},
+    {type: "sewage", lat: 19.145, lon: 72.892, info: "Powai Lake Outlet"},
+    {type: "sewage", lat: 19.195, lon: 72.952, info: "Thane Creek Pollution"},
+    
+    // Healthcare gaps
+    {type: "hospital", lat: 19.085, lon: 72.845, info: "Dharavi Medical Desert"},
+    {type: "hospital", lat: 19.022, lon: 72.855, info: "Malad Healthcare Gap"},
+    {type: "hospital", lat: 19.172, lon: 72.942, info: "Mulund West Gap"},
+    {type: "hospital", lat: 19.052, lon: 72.902, info: "Ghatkopar Medical Shortage"},
+    {type: "hospital", lat: 19.008, lon: 72.828, info: "South Mumbai Gap"},
+    {type: "hospital", lat: 19.132, lon: 72.868, info: "Saki Naka Healthcare Desert"},
+    {type: "hospital", lat: 19.062, lon: 72.878, info: "Kurla Medical Gap"},
+    
+    // High population density areas
+    {type: "population", lat: 19.002, lon: 72.842, info: "Dharavi Dense Zone"},
+    {type: "population", lat: 19.018, lon: 72.828, info: "Worli Koliwada Density"},
+    {type: "population", lat: 19.065, lon: 72.878, info: "Kurla Crowding"},
+    {type: "population", lat: 19.042, lon: 72.852, info: "Byculla Density"},
+    {type: "population", lat: 19.028, lon: 72.855, info: "Mahim Density"},
+    {type: "population", lat: 19.075, lon: 72.902, info: "Chembur Colony Crowding"},
+    {type: "population", lat: 19.012, lon: 72.818, info: "Grant Road Density"}
+  ],
+  
+  Kolkata: [
+    // Landfill sites
+    {type: "landfill", lat: 22.562, lon: 88.402, info: "Dhapa Dumping Ground"},
+    {type: "landfill", lat: 22.592, lon: 88.422, info: "East Kolkata Waste Site"},
+    {type: "landfill", lat: 22.512, lon: 88.372, info: "Garden Reach Dump"},
+    {type: "landfill", lat: 22.482, lon: 88.352, info: "Budge Budge Waste Area"},
+    {type: "landfill", lat: 22.642, lon: 88.432, info: "Barrackpore Dump Site"},
+    {type: "landfill", lat: 22.532, lon: 88.392, info: "Tiljala Waste Collection"},
+    {type: "landfill", lat: 22.602, lon: 88.382, info: "Dum Dum Landfill"},
+    
+    // Sewage issues
+    {type: "sewage", lat: 22.532, lon: 88.345, info: "Hooghly Outlet"},
+    {type: "sewage", lat: 22.572, lon: 88.352, info: "Tolly's Nullah"},
+    {type: "sewage", lat: 22.552, lon: 88.362, info: "Circular Canal Outlet"},
+    {type: "sewage", lat: 22.512, lon: 88.332, info: "Kidderpore Drainage"},
+    {type: "sewage", lat: 22.592, lon: 88.372, info: "Beliaghata Canal"},
+    {type: "sewage", lat: 22.622, lon: 88.392, info: "Kestopur Canal"},
+    {type: "sewage", lat: 22.542, lon: 88.382, info: "Eastern Drainage Channel"},
+    
+    // Healthcare gaps
+    {type: "hospital", lat: 22.572, lon: 88.372, info: "North Medical Gap"},
+    {type: "hospital", lat: 22.522, lon: 88.352, info: "Metiabruz Healthcare Desert"},
+    {type: "hospital", lat: 22.602, lon: 88.402, info: "Rajarhat Medical Gap"},
+    {type: "hospital", lat: 22.492, lon: 88.372, info: "Maheshtala Healthcare Shortage"},
+    {type: "hospital", lat: 22.582, lon: 88.342, info: "Howrah Border Gap"},
+    {type: "hospital", lat: 22.552, lon: 88.392, info: "East Kolkata Medical Desert"},
+    {type: "hospital", lat: 22.622, lon: 88.362, info: "Baranagar Healthcare Gap"},
+    
+    // High population density areas
+    {type: "population", lat: 22.567, lon: 88.352, info: "Central Dense Area"},
+    {type: "population", lat: 22.582, lon: 88.362, info: "Shyambazar Density"},
+    {type: "population", lat: 22.542, lon: 88.342, info: "Kalighat Crowding"},
+    {type: "population", lat: 22.562, lon: 88.372, info: "Park Circus Density"},
+    {type: "population", lat: 22.532, lon: 88.362, info: "Bhowanipore Crowding"},
+    {type: "population", lat: 22.592, lon: 88.382, info: "Ultadanga Density"},
+    {type: "population", lat: 22.552, lon: 88.352, info: "Entally Crowding"}
+  ],
+  
+  Chennai: [
+    // Landfill sites
+    {type: "landfill", lat: 13.082, lon: 80.252, info: "Kodungaiyur Dump"},
+    {type: "landfill", lat: 13.042, lon: 80.142, info: "Perungudi Landfill"},
+    {type: "landfill", lat: 13.122, lon: 80.192, info: "Manali Waste Site"},
+    {type: "landfill", lat: 13.002, lon: 80.212, info: "Pallikaranai Dump"},
+    {type: "landfill", lat: 13.162, lon: 80.232, info: "Madhavaram Waste Area"},
+    {type: "landfill", lat: 13.062, lon: 80.172, info: "Porur Waste Collection"},
+    {type: "landfill", lat: 13.102, lon: 80.292, info: "Ennore Dump Site"},
+    
+    // Sewage issues
+    {type: "sewage", lat: 13.052, lon: 80.282, info: "Adyar River Outlet"},
+    {type: "sewage", lat: 13.092, lon: 80.292, info: "Cooum River Mouth"},
+    {type: "sewage", lat: 13.022, lon: 80.252, info: "Buckingham Canal South"},
+    {type: "sewage", lat: 13.112, lon: 80.262, info: "Buckingham Canal North"},
+    {type: "sewage", lat: 13.062, lon: 80.242, info: "Otteri Nullah"},
+    {type: "sewage", lat: 13.042, lon: 80.222, info: "Mambalam Canal"},
+    {type: "sewage", lat: 13.082, lon: 80.212, info: "Virugambakkam Canal"},
+    
+    // Healthcare gaps
+    {type: "hospital", lat: 13.062, lon: 80.262, info: "West Zone Gap"},
+    {type: "hospital", lat: 13.122, lon: 80.232, info: "North Chennai Medical Desert"},
+    {type: "hospital", lat: 13.022, lon: 80.192, info: "Pallavaram Healthcare Gap"},
+    {type: "hospital", lat: 13.092, lon: 80.172, info: "Porur Medical Shortage"},
+    {type: "hospital", lat: 13.152, lon: 80.202, info: "Madhavaram Healthcare Desert"},
+    {type: "hospital", lat: 13.042, lon: 80.232, info: "Saidapet Medical Gap"},
+    {type: "hospital", lat: 13.082, lon: 80.292, info: "Tondiarpet Healthcare Shortage"},
+    
+    // High population density areas
+    {type: "population", lat: 13.072, lon: 80.272, info: "George Town Density"},
+    {type: "population", lat: 13.052, lon: 80.262, info: "Triplicane Crowding"},
+    {type: "population", lat: 13.082, lon: 80.242, info: "Purasawalkam Density"},
+    {type: "population", lat: 13.062, lon: 80.252, info: "Egmore Crowding"},
+    {type: "population", lat: 13.092, lon: 80.262, info: "Royapuram Density"},
+    {type: "population", lat: 13.042, lon: 80.242, info: "T. Nagar Crowding"},
+    {type: "population", lat: 13.102, lon: 80.282, info: "Washermanpet Density"}
+  ],
+  
+  Ahmedabad: [
+    // Landfill sites
+    {type: "landfill", lat: 23.062, lon: 72.602, info: "Pirana Dumpsite"},
+    {type: "landfill", lat: 23.092, lon: 72.632, info: "Naroda Waste Site"},
+    {type: "landfill", lat: 23.022, lon: 72.582, info: "Vasna Dump"},
+    {type: "landfill", lat: 23.112, lon: 72.562, info: "Chandkheda Waste Area"},
+    {type: "landfill", lat: 23.042, lon: 72.652, info: "Odhav Landfill"},
+    {type: "landfill", lat: 23.002, lon: 72.542, info: "Vejalpur Waste Collection"},
+    {type: "landfill", lat: 23.082, lon: 72.512, info: "Sarkhej Dump Site"},
+    
+    // Sewage issues
+    {type: "sewage", lat: 23.032, lon: 72.572, info: "Sabarmati Outlet"},
+    {type: "sewage", lat: 23.062, lon: 72.582, info: "Kharicut Canal"},
+    {type: "sewage", lat: 23.012, lon: 72.562, info: "Chandola Lake Outlet"},
+    {type: "sewage", lat: 23.082, lon: 72.592, info: "Nikol Drain"},
+    {type: "sewage", lat: 23.042, lon: 72.612, info: "Vatva Industrial Effluent"},
+    {type: "sewage", lat: 23.022, lon: 72.542, info: "Juhapura Drain"},
+    {type: "sewage", lat: 23.102, lon: 72.572, info: "Motera Sewage Point"},
+    
+    // Healthcare gaps
+    {type: "hospital", lat: 23.042, lon: 72.582, info: "East Zone Gap"},
+    {type: "hospital", lat: 23.012, lon: 72.552, info: "South Zone Medical Desert"},
+    {type: "hospital", lat: 23.092, lon: 72.612, info: "Naroda Healthcare Gap"},
+    {type: "hospital", lat: 23.062, lon: 72.532, info: "Vejalpur Medical Shortage"},
+    {type: "hospital", lat: 23.112, lon: 72.582, info: "Chandkheda Healthcare Desert"},
+    {type: "hospital", lat: 23.032, lon: 72.622, info: "Odhav Medical Gap"},
+    {type: "hospital", lat: 23.082, lon: 72.542, info: "Sarkhej Healthcare Shortage"},
+    
+    // High population density areas
+    {type: "population", lat: 23.022, lon: 72.592, info: "Old City Density"},
+    {type: "population", lat: 23.042, lon: 72.562, info: "Dariapur Crowding"},
+    {type: "population", lat: 23.062, lon: 72.582, info: "Bapunagar Density"},
+    {type: "population", lat: 23.032, lon: 72.542, info: "Juhapura Crowding"},
+    {type: "population", lat: 23.052, lon: 72.602, info: "Amraiwadi Density"},
+    {type: "population", lat: 23.012, lon: 72.572, info: "Danilimda Crowding"},
+    {type: "population", lat: 23.082, lon: 72.562, info: "Saraspur Density"}
+  ],
+  
+  Hyderabad: [
+    // Landfill sites
+    {type: "landfill", lat: 17.402, lon: 78.512, info: "Jawaharnagar Dump"},
+    {type: "landfill", lat: 17.432, lon: 78.542, info: "Shamirpet Waste Site"},
+    {type: "landfill", lat: 17.362, lon: 78.482, info: "Golconda Dump"},
+    {type: "landfill", lat: 17.452, lon: 78.492, info: "Medchal Waste Area"},
+    {type: "landfill", lat: 17.382, lon: 78.552, info: "Kapra Landfill"},
+    {type: "landfill", lat: 17.342, lon: 78.522, info: "LB Nagar Waste Collection"},
+    {type: "landfill", lat: 17.422, lon: 78.462, info: "Kukatpally Dump Site"},
+    
+    // Sewage issues
+    {type: "sewage", lat: 17.372, lon: 78.482, info: "Musi River Outlet"},
+    {type: "sewage", lat: 17.402, lon: 78.492, info: "Hussain Sagar Outlet"},
+    {type: "sewage", lat: 17.352, lon: 78.462, info: "Mir Alam Tank Drain"},
+    {type: "sewage", lat: 17.422, lon: 78.522, info: "Fox Sagar Lake Outlet"},
+    {type: "sewage", lat: 17.392, lon: 78.452, info: "Kukatpally Nala"},
+    {type: "sewage", lat: 17.362, lon: 78.522, info: "Saroornagar Lake Drain"},
+    {type: "sewage", lat: 17.432, lon: 78.482, info: "Secunderabad Drain"},
+    
+    // Healthcare gaps
+    {type: "hospital", lat: 17.382, lon: 78.492, info: "South Zone Gap"},
+    {type: "hospital", lat: 17.422, lon: 78.542, info: "Medchal Medical Desert"},
+    {type: "hospital", lat: 17.352, lon: 78.522, info: "LB Nagar Healthcare Gap"},
+    {type: "hospital", lat: 17.402, lon: 78.452, info: "Kukatpally Medical Shortage"},
+    {type: "hospital", lat: 17.442, lon: 78.492, info: "Alwal Healthcare Desert"},
+    {type: "hospital", lat: 17.372, lon: 78.552, info: "Uppal Medical Gap"},
+    {type: "hospital", lat: 17.342, lon: 78.482, info: "Attapur Healthcare Shortage"},
+    
+    // High population density areas
+    {type: "population", lat: 17.362, lon: 78.472, info: "Old City Dense Area"},
+    {type: "population", lat: 17.382, lon: 78.482, info: "Charminar Crowding"},
+    {type: "population", lat: 17.402, lon: 78.492, info: "Abids Density"},
+    {type: "population", lat: 17.422, lon: 78.502, info: "Secunderabad Crowding"},
+    {type: "population", lat: 17.392, lon: 78.462, info: "Mehdipatnam Density"},
+    {type: "population", lat: 17.372, lon: 78.512, info: "Dilsukhnagar Crowding"},
+    {type: "population", lat: 17.412, lon: 78.472, info: "Begumpet Density"}
+  ]
+};
+
+const problemIcons = {
+  landfill: "🗑️",
+  sewage: "💧",
+  hospital: "🏥",
+  population: "👥"
+};
+
+function show(key){
+  markers.forEach(m=>map.removeLayer(m));
+  markers=[];
+  const keys=key==="all"?Object.keys(issues):[key];
+  keys.forEach(k=>{
+    issues[k].forEach(c=>{
+      const icon=L.divIcon({html:`<div style="background:${colors[k]};width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>`,className:""});
+      const m=L.marker([c.lat,c.lon],{icon}).addTo(map)
+        .bindPopup(`<b>${c.name}</b><br>${c.info}`);
+      markers.push(m);
+    });
+  });
+  map.setView([22.5,79],5);
+}
+
+// ---------- Metro City Focus ----------
+const metroCities={
+  Delhi:{lat:28.61,lon:77.23},
+  Mumbai:{lat:19.07,lon:72.88},
+  Kolkata:{lat:22.57,lon:88.36},
+  Chennai:{lat:13.08,lon:80.27},
+  Ahmedabad:{lat:23.03,lon:72.58},
+  Hyderabad:{lat:17.38,lon:78.49}
+};
+
+function showCityProblems(cityName) {
+  // Clear existing city detail markers
+  cityDetailMarkers.forEach(m => map.removeLayer(m));
+  cityDetailMarkers = [];
+
+  const problems = cityProblems[cityName];
+  if (problems) {
+    problems.forEach(p => {
+      const icon = L.divIcon({
+        html: `<div class="city-problem-marker">${problemIcons[p.type]}</div>`,
+        className: "",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+      const marker = L.marker([p.lat, p.lon], {icon})
+        .bindPopup(`<b>${cityName}</b><br>${p.info}`)
+        .addTo(map);
+      cityDetailMarkers.push(marker);
+    });
+  }
+}
+
+function focusCity(name){
+  const c=metroCities[name];
+  if(c){
+    map.setView([c.lat,c.lon],13,{animate:true});
+    const pane=document.getElementById("infoPane");
+    pane.style.display="block";
+    pane.innerHTML=`<b>${name}</b>: 🗑️ Landfill &nbsp; 💧 Sewage &nbsp; 🏥 Lack of Hospitals &nbsp; 👥 High Population Density`;
+    showCityProblems(name);
+  }
+}
+
+// Handle zoom events to show/hide detailed markers
+map.on('zoomend', function() {
+  const zoom = map.getZoom();
+  const center = map.getCenter();
+  
+  // Find the closest city to the center when zoomed in
+  if (zoom >= 11) {
+    let closestCity = null;
+    let minDistance = Infinity;
+    
+    Object.entries(metroCities).forEach(([cityName, coords]) => {
+      const distance = map.distance(center, [coords.lat, coords.lon]);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestCity = cityName;
+      }
+    });
+    
+    if (closestCity && minDistance < 20000) { // Within 20km
+      showCityProblems(closestCity);
+    }
+  } else {
+    // Clear city detail markers when zoomed out
+    cityDetailMarkers.forEach(m => map.removeLayer(m));
+    cityDetailMarkers = [];
+  }
+});
+
+show('all');

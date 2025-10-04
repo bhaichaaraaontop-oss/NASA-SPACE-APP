@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>India Environmental Issues Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header><h2>🌍 India Environmental Issues Map</h2></header>
+
+<!-- Metro city quick buttons -->
+<div class="citybar">
+  <button onclick="focusCity('Delhi')">Delhi</button>
+  <button onclick="focusCity('Mumbai')">Mumbai</button>
+  <button onclick="focusCity('Kolkata')">Kolkata</button>
+  <button onclick="focusCity('Chennai')">Chennai</button>
+  <button onclick="focusCity('Ahmedabad')">Ahmedabad</button>
+  <button onclick="focusCity('Hyderabad')">Hyderabad</button>
+</div>
+
+<!-- Info pane for selected metro problems -->
+<div id="infoPane"></div>
+
+<!-- Problem type tabs -->
+<div class="tabs">
+  <button onclick="show('all')">All Issues</button>
+  <button onclick="show('air')">Air Pollution</button>
+  <button onclick="show('water')">Water Pollution</button>
+  <button onclick="show('heat')">Heat Islands</button>
+  <button onclick="show('flood')">Flood Risk</button>
+  <button onclick="show('forest')">Forest Loss</button>
+</div>
+
+<!-- Map container -->
+<div id="map"></div>
+
+<!-- Legend -->
+<div class="legend">
+  <div><span class="dot" style="background:crimson"></span>Air Pollution</div>
+  <div><span class="dot" style="background:dodgerblue"></span>Water Pollution</div>
+  <div><span class="dot" style="background:orange"></span>Heat Islands</div>
+  <div><span class="dot" style="background:royalblue"></span>Flood Risk</div>
+  <div><span class="dot" style="background:forestgreen"></span>Forest Loss</div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
